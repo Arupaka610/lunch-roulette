@@ -261,10 +261,24 @@ const App = {
       });
     } catch (e) {
       console.warn('fetchFields failed, using cached data:', e);
+    } finally {
+      this.showLoading(false);
+      try {
+        this.renderDetail(restaurant);
+      } catch (e) {
+        console.warn('renderDetail failed:', e);
+        // 最低限の情報だけ表示
+        document.getElementById('detail-name').textContent = restaurant.displayName || '不明';
+        document.getElementById('detail-meta').innerHTML = '';
+        document.getElementById('detail-hours').textContent = '';
+        document.getElementById('detail-address').textContent = '';
+        document.getElementById('detail-phone-section').style.display = 'none';
+        document.getElementById('btn-website').style.display = 'none';
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.displayName || '')}&query_place_id=${restaurant.id}`;
+        document.getElementById('btn-maps').href = mapsUrl;
+      }
+      this.showScreen('detail');
     }
-    this.showLoading(false);
-    this.renderDetail(restaurant);
-    this.showScreen('detail');
   },
 
   renderDetail(place) {
