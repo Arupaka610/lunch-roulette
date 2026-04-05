@@ -109,37 +109,42 @@ const App = {
         'priceLevel', 'regularOpeningHours', 'businessStatus',
       ];
       const center = { lat: this.userLocation.lat, lng: this.userLocation.lng };
-      const PL = google.maps.places.PriceLevel;
-      const budgetMap = {
-        '1': [PL.FREE, PL.INEXPENSIVE],
-        '2': [PL.MODERATE],
-        '3': [PL.EXPENSIVE],
-        '4': [PL.VERY_EXPENSIVE],
-      };
 
       let places;
 
       if (genre) {
         // キーワード指定 → searchByText
-        const req = {
+        ({ places } = await google.maps.places.Place.searchByText({
           textQuery: genre,
           fields,
           locationRestriction: { center, radius },
           includedType: 'restaurant',
           maxResultCount: 20,
-        };
-        if (budget && budgetMap[budget]) req.priceLevels = budgetMap[budget];
-        ({ places } = await google.maps.places.Place.searchByText(req));
+        }));
       } else {
         // ジャンル未指定 → searchNearby
-        const req = {
+        ({ places } = await google.maps.places.Place.searchNearby({
           fields,
           locationRestriction: { center, radius },
           includedPrimaryTypes: ['restaurant'],
           maxResultCount: 20,
+        }));
+      }
+
+      // 予算フィルター（クライアント側）
+      if (budget && places?.length) {
+        const PL = google.maps.places.PriceLevel;
+        const budgetMap = {
+          '1': [PL.FREE, PL.INEXPENSIVE],
+          '2': [PL.MODERATE],
+          '3': [PL.EXPENSIVE],
+          '4': [PL.VERY_EXPENSIVE],
         };
-        if (budget && budgetMap[budget]) req.priceLevels = budgetMap[budget];
-        ({ places } = await google.maps.places.Place.searchNearby(req));
+        const allowed = budgetMap[budget];
+        if (allowed) {
+          const filtered = places.filter(p => p.priceLevel && allowed.includes(p.priceLevel));
+          if (filtered.length >= 3) places = filtered;
+        }
       }
 
       this.showLoading(false);
