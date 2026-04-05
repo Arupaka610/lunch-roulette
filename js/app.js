@@ -53,22 +53,35 @@ const App = {
     dot.className = 'location-dot loading';
     text.textContent = '位置情報を取得中...';
 
+    const onSuccess = pos => {
+      this.userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      dot.className = 'location-dot success';
+      text.textContent = '位置情報を取得しました ✓';
+    };
+
+    const onError = (err, highAccuracy) => {
+      // 高精度で失敗した場合は低精度で再試行
+      if (highAccuracy && err.code !== 1) {
+        navigator.geolocation.getCurrentPosition(onSuccess, onError2,
+          { timeout: 10000, enableHighAccuracy: false, maximumAge: 60000 });
+        return;
+      }
+      dot.className = 'location-dot error';
+      if (err.code === 1) {
+        text.innerHTML = '位置情報が拒否されています。<br>ブラウザの設定から許可してください';
+      } else if (err.code === 3) {
+        text.textContent = '取得タイムアウト。↺ ボタンで再試行してください';
+      } else {
+        text.textContent = '位置情報を取得できませんでした';
+      }
+    };
+
+    const onError2 = err => onError(err, false);
+
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        this.userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        dot.className = 'location-dot success';
-        text.textContent = '位置情報を取得しました ✓';
-      },
-      err => {
-        dot.className = 'location-dot error';
-        const msgs = {
-          1: '位置情報の使用が拒否されました',
-          2: '位置情報を取得できませんでした',
-          3: '位置情報の取得がタイムアウトしました',
-        };
-        text.textContent = msgs[err.code] || '位置情報の取得に失敗しました';
-      },
-      { timeout: 10000, enableHighAccuracy: true, maximumAge: 60000 }
+      onSuccess,
+      err => onError(err, true),
+      { timeout: 8000, enableHighAccuracy: true, maximumAge: 60000 }
     );
   },
 
