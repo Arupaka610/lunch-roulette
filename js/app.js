@@ -136,8 +136,13 @@ const App = {
         return;
       }
 
-      // 営業中のお店を優先
-      const open = places.filter(p => p.regularOpeningHours?.isOpen());
+      // 営業中のお店を優先（isOpen が関数でない場合は無視）
+      const open = places.filter(p => {
+        try {
+          const oh = p.regularOpeningHours;
+          return oh && typeof oh.isOpen === 'function' && oh.isOpen() === true;
+        } catch { return false; }
+      });
       this.searchResults = open.length >= 3 ? open : places;
       this.startRoulette();
 
@@ -316,6 +321,14 @@ const App = {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(`${name}-screen`).classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // 画面が表示されてから広告を初期化（非表示要素への適用を防ぐ）
+    setTimeout(() => {
+      const screen = document.getElementById(`${name}-screen`);
+      screen.querySelectorAll('ins.adsbygoogle:not([data-adsbygoogle-status])').forEach(() => {
+        try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
+      });
+    }, 100);
   },
 
   showLoading(show, text = '読み込み中...') {
