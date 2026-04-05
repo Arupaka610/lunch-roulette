@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ランチルーレット</title>
+  <meta name="description" content="近くのレストランをランダムに選ぶランチ決めアプリ">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ADSENSE_CLIENT_PLACEHOLDER"
+          crossorigin="anonymous"></script>
+  <script src="js/config.js"></script>
+  <script>
+    window.__gmapsReady = function() {
+      if (window.__onGmapsReady) window.__onGmapsReady();
+    };
+    (function() {
+      const s = document.createElement('script');
+      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_MAPS_API_KEY
+            + '&libraries=places&callback=__gmapsReady&loading=async&language=ja';
+      s.async = true;
+      document.head.appendChild(s);
+    })();
+  </script>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <p class="loading-text">検索中...</p>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- ① Search Screen (検索条件) -->
+<div id="search-screen" class="screen">
+  <div class="screen-inner">
+    <div class="app-header">
+      <div class="app-logo">🎲</div>
+      <h1 class="app-title">ランチルーレット</h1>
+      <p class="app-subtitle">条件を設定してお店を探そう</p>
+    </div>
+
+    <div class="card">
+      <!-- 位置情報 -->
+      <div class="location-row">
+        <div id="location-dot" class="location-dot"></div>
+        <span id="location-status-text" class="location-text">位置情報を取得中...</span>
+        <button id="btn-retry-location" class="btn-icon" title="再取得">↺</button>
+      </div>
+
+      <!-- 検索範囲 -->
+      <div class="form-group">
+        <label class="form-label">📍 検索範囲</label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" name="radius" id="r300" value="300">
+            <label for="r300">300m</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" name="radius" id="r500" value="500" checked>
+            <label for="r500">500m</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" name="radius" id="r1000" value="1000">
+            <label for="r1000">1km</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" name="radius" id="r2000" value="2000">
+            <label for="r2000">2km</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ジャンル -->
+      <div class="form-group">
+        <label class="form-label">🍽️ ジャンル（任意）</label>
+        <div class="select-wrapper">
+          <select id="genre-select" class="form-select">
+            <option value="">こだわらない</option>
+            <option value="和食">和食</option>
+            <option value="ラーメン">ラーメン</option>
+            <option value="寿司">寿司</option>
+            <option value="中華">中華</option>
+            <option value="イタリアン">イタリアン</option>
+            <option value="洋食">洋食</option>
+            <option value="カレー">カレー</option>
+            <option value="カフェ">カフェ</option>
+            <option value="焼肉">焼肉</option>
+            <option value="ファストフード">ファストフード</option>
+            <option value="定食">定食</option>
+            <option value="そば うどん">そば・うどん</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 予算 -->
+      <div class="form-group">
+        <label class="form-label">💴 予算（任意）</label>
+        <div class="select-wrapper">
+          <select id="budget-select" class="form-select">
+            <option value="">こだわらない</option>
+            <option value="1">～500円（¥）</option>
+            <option value="2">～1,000円（¥¥）</option>
+            <option value="3">～2,000円（¥¥¥）</option>
+            <option value="4">2,000円～（¥¥¥¥）</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="btn-search" class="btn btn-primary btn-large">
+        🎲 ランチを探す！
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ③ Roulette Screen (ルーレット) -->
+<div id="roulette-screen" class="screen">
+  <div class="screen-inner">
+    <div class="roulette-header">
+      <h2 class="roulette-title">🎲 ルーレット</h2>
+      <p id="roulette-subtitle" class="roulette-subtitle">お店を選んでいます...</p>
+    </div>
+
+    <div class="roulette-cards" id="roulette-cards">
+      <div id="roulette-card-0" class="roulette-card">
+        <div class="card-number">1</div>
+        <div class="roulette-card-content">
+          <div class="card-placeholder">🎲</div>
+        </div>
+      </div>
+      <div id="roulette-card-1" class="roulette-card">
+        <div class="card-number">2</div>
+        <div class="roulette-card-content">
+          <div class="card-placeholder">🎲</div>
+        </div>
+      </div>
+      <div id="roulette-card-2" class="roulette-card">
+        <div class="card-number">3</div>
+        <div class="roulette-card-content">
+          <div class="card-placeholder">🎲</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="roulette-actions" class="roulette-actions">
+      <p class="select-instruction">👆 カードをタップして選択</p>
+      <div class="btn-row">
+        <button id="btn-retry-roulette" class="btn btn-outline">もう一度</button>
+        <button id="btn-back-to-search" class="btn btn-ghost">条件を変える</button>
+      </div>
+    </div>
+
+    <!-- 広告: ルーレット画面下部 -->
+    <div class="ad-container">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ADSENSE_CLIENT_PLACEHOLDER"
+           data-ad-slot="ADSENSE_SLOT_PLACEHOLDER"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+  </div>
+</div>
+
+<!-- ④ Detail Screen (詳細) -->
+<div id="detail-screen" class="screen">
+  <div class="screen-inner">
+    <button id="btn-back-to-roulette" class="btn-back">← 戻る</button>
+
+    <div class="detail-winner-badge">🎉 今日のランチ</div>
+
+    <div class="card detail-card">
+      <div id="detail-name" class="detail-name"></div>
+      <div id="detail-meta" class="detail-meta"></div>
+      <div id="detail-hours" class="detail-hours"></div>
+      <div id="detail-address-section" class="detail-section">
+        <div class="detail-section-label">📍 住所</div>
+        <div id="detail-address" class="detail-section-value"></div>
+      </div>
+      <div id="detail-phone-section" class="detail-section">
+        <div class="detail-section-label">📞 電話番号</div>
+        <div id="detail-phone" class="detail-section-value"></div>
+      </div>
+    </div>
+
+    <!-- 広告: 詳細画面 -->
+    <div class="ad-container">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ADSENSE_CLIENT_PLACEHOLDER"
+           data-ad-slot="ADSENSE_SLOT_PLACEHOLDER"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    <div class="detail-actions">
+      <a id="btn-maps" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-large">
+        🗺️ Google マップで開く
+      </a>
+      <a id="btn-website" href="#" target="_blank" rel="noopener noreferrer"
+         class="btn btn-outline btn-large" style="display:none">
+        🌐 ウェブサイト
+      </a>
+    </div>
+
+    <button id="btn-new-search" class="btn btn-ghost">
+      🔄 最初からやり直す
+    </button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
