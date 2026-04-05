@@ -324,6 +324,19 @@ body {
   flex: 1;
 }
 
+.location-row-btn {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.location-row-btn:hover,
+.location-row-btn:active { background: #EFEFEF; }
+
+.location-hint {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
 /* ===== Setup Card ===== */
 .setup-card {
   text-align: center;

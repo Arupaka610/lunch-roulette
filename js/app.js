@@ -18,6 +18,7 @@ const App = {
 
   start() {
     this.showScreen('search');
+    // 自動取得を試みる（iOS Safari では失敗する場合あり → 行タップで再試行）
     this.getLocation();
   },
 
@@ -25,7 +26,8 @@ const App = {
   bindEvents() {
     document.getElementById('btn-search')
       .addEventListener('click', () => this.search());
-    document.getElementById('btn-retry-location')
+    // 位置情報行全体をタップで取得（iOS Safariのジェスチャー要件に対応）
+    document.getElementById('location-row')
       .addEventListener('click', () => this.getLocation());
 
     document.getElementById('btn-retry-roulette')
@@ -68,7 +70,7 @@ const App = {
       }
       dot.className = 'location-dot error';
       if (err.code === 1) {
-        text.innerHTML = '位置情報が拒否されています。<br>ブラウザの設定から許可してください';
+        text.innerHTML = '拒否されました。Safari設定 → このWebサイト → 位置情報 → 許可';
       } else if (err.code === 3) {
         text.textContent = '取得タイムアウト。↺ ボタンで再試行してください';
       } else {
@@ -225,8 +227,9 @@ const App = {
   buildCardHTML(restaurant) {
     const rating     = restaurant.rating != null ? `${restaurant.rating}` : null;
     const priceLevel = this.priceLevelToYen(restaurant.priceLevel);
-    const open       = restaurant.regularOpeningHours?.isOpen();
-    const openLabel  = open != null ? (open ? '営業中' : '準備中') : null;
+    const oh = restaurant.regularOpeningHours;
+    const open = oh && typeof oh.isOpen === 'function' ? oh.isOpen() : null;
+    const openLabel = open != null ? (open ? '営業中' : '準備中') : null;
 
     const infoItems = [
       rating     ? `<span class="stars">⭐ ${rating}</span>` : '',
@@ -289,7 +292,8 @@ const App = {
     const phone       = place.nationalPhoneNumber || '';
     const priceLevel  = this.priceLevelToYen(place.priceLevel);
     const website     = place.websiteURI || '';
-    const isOpen      = place.regularOpeningHours?.isOpen?.();
+    const _oh = place.regularOpeningHours;
+    const isOpen = _oh && typeof _oh.isOpen === 'function' ? _oh.isOpen() : null;
 
     document.getElementById('detail-name').textContent = name;
 
