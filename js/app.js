@@ -108,7 +108,7 @@ const App = {
     try {
       const fields = [
         'id', 'displayName', 'location', 'rating',
-        'priceLevel', 'regularOpeningHours', 'businessStatus',
+        'priceLevel', 'regularOpeningHours', 'currentOpeningHours', 'businessStatus',
       ];
       const center = new google.maps.LatLng(this.userLocation.lat, this.userLocation.lng);
 
@@ -229,7 +229,7 @@ const App = {
   buildCardHTML(restaurant) {
     const rating     = restaurant.rating != null ? `${restaurant.rating}` : null;
     const priceLevel = this.priceLevelToYen(restaurant.priceLevel);
-    const open       = this.getOpenNow(restaurant.regularOpeningHours);
+    const open       = this.getOpenNow(restaurant);
     const openLabel  = open != null ? (open ? '営業中' : '準備中') : null;
 
     const infoItems = [
@@ -293,7 +293,7 @@ const App = {
     const phone       = place.nationalPhoneNumber || '';
     const priceLevel  = this.priceLevelToYen(place.priceLevel);
     const website     = place.websiteURI || '';
-    const isOpen = this.getOpenNow(place.regularOpeningHours);
+    const isOpen = this.getOpenNow(place);
 
     document.getElementById('detail-name').textContent = name;
 
@@ -376,12 +376,15 @@ const App = {
 
   // ===== ユーティリティ =====
   // regularOpeningHours から営業中かどうかを取得（isOpen関数 or openNow プロパティ対応）
-  getOpenNow(oh) {
-    if (!oh) return null;
-    try {
-      if (typeof oh.isOpen === 'function') return oh.isOpen();
-      if (oh.openNow != null) return oh.openNow;
-    } catch {}
+  getOpenNow(place) {
+    // currentOpeningHours → regularOpeningHours の順で確認
+    for (const oh of [place?.currentOpeningHours, place?.regularOpeningHours]) {
+      if (!oh) continue;
+      try {
+        if (typeof oh.isOpen === 'function') return oh.isOpen();
+        if (oh.openNow != null) return oh.openNow;
+      } catch {}
+    }
     return null;
   },
 
