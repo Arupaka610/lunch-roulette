@@ -265,7 +265,7 @@ const App = {
       await restaurant.fetchFields({
         fields: [
           'id', 'displayName', 'formattedAddress', 'nationalPhoneNumber',
-          'rating', 'priceLevel', 'regularOpeningHours',
+          'rating', 'priceLevel', 'regularOpeningHours', 'currentOpeningHours',
           'websiteURI', 'userRatingCount', 'reviews',
         ],
       });
@@ -348,28 +348,7 @@ const App = {
     document.getElementById('btn-maps').href = mapsUrl;
 
     // 口コミ（カード内）
-    const reviewsEl = document.getElementById('detail-reviews');
-    const reviews = place.reviews;
-    if (reviews?.length) {
-      reviewsEl.innerHTML = `
-        <div class="reviews-title">💬 口コミ</div>
-        ${reviews.slice(0, 3).map(r => {
-        const author = r.authorAttribution?.displayName || '匿名';
-        const stars = '⭐'.repeat(Math.round(r.rating || 0));
-        const text = typeof r.text === 'string' ? r.text : (r.text?.text || '');
-        const time = r.relativePublishTimeDescription || '';
-        return `<div class="review-card">
-            <div class="review-header">
-              <span class="review-author">${author}</span>
-              <span class="review-stars">${stars}</span>
-              <span class="review-time">${time}</span>
-            </div>
-            ${text ? `<div class="review-text">${text}</div>` : ''}
-          </div>`;
-      }).join('')}`;
-    } else {
-      reviewsEl.innerHTML = '';
-    }
+    this.renderReviews(place.reviews);
 
     const websiteBtn = document.getElementById('btn-website');
     if (website) {
