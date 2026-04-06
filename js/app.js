@@ -50,7 +50,7 @@ const App = {
   // ===== 位置情報取得 =====
   getLocation() {
     const text = document.getElementById('location-status-text');
-    const dot  = document.getElementById('location-dot');
+    const dot = document.getElementById('location-dot');
 
     if (!navigator.geolocation) {
       text.textContent = '位置情報が利用できません';
@@ -106,7 +106,7 @@ const App = {
     }
 
     const radius = parseInt(document.querySelector('input[name="radius"]:checked').value);
-    const genre  = document.getElementById('genre-select').value;
+    const genre = document.getElementById('genre-select').value;
     const budget = document.getElementById('budget-select').value;
 
     this.showLoading(true, '近くのお店を検索中...');
@@ -114,7 +114,7 @@ const App = {
     try {
       const fields = [
         'id', 'displayName', 'location', 'rating',
-        'priceLevel', 'regularOpeningHours', 'currentOpeningHours', 'businessStatus',
+        'priceLevel', 'openingHours', 'regularOpeningHours', 'currentOpeningHours', 'businessStatus',
       ];
       const center = new google.maps.LatLng(this.userLocation.lat, this.userLocation.lng);
 
@@ -213,8 +213,8 @@ const App = {
 
   // ===== カードスピンアニメーション =====
   spinCard(index, restaurant) {
-    const card     = document.getElementById(`roulette-card-${index}`);
-    const content  = card.querySelector('.roulette-card-content');
+    const card = document.getElementById(`roulette-card-${index}`);
+    const content = card.querySelector('.roulette-card-content');
     const allNames = this.searchResults.map(r => r.displayName || '');
 
     card.className = 'roulette-card spinning';
@@ -233,15 +233,15 @@ const App = {
   },
 
   buildCardHTML(restaurant) {
-    const rating     = restaurant.rating != null ? `${restaurant.rating}` : null;
+    const rating = restaurant.rating != null ? `${restaurant.rating}` : null;
     const priceLevel = this.priceLevelToYen(restaurant.priceLevel);
-    const open       = this.getOpenNow(restaurant);
-    const openLabel  = open != null ? (open ? '営業中' : '準備中') : null;
+    const open = this.getOpenNow(restaurant);
+    const openLabel = open != null ? (open ? '営業中' : '準備中') : null;
 
     const infoItems = [
-      rating     ? `<span class="stars">⭐ ${rating}</span>` : '',
+      rating ? `<span class="stars">⭐ ${rating}</span>` : '',
       priceLevel ? `<span>${priceLevel}</span>` : '',
-      openLabel  ? `<span style="color:${open ? '#4CAF50' : '#999'}">${open ? '🟢' : '🔴'} ${openLabel}</span>` : '',
+      openLabel ? `<span style="color:${open ? '#4CAF50' : '#999'}">${open ? '🟢' : '🔴'} ${openLabel}</span>` : '',
     ].filter(Boolean).join('');
 
     return `
@@ -265,7 +265,7 @@ const App = {
       await restaurant.fetchFields({
         fields: [
           'id', 'displayName', 'formattedAddress', 'nationalPhoneNumber',
-          'rating', 'priceLevel', 'regularOpeningHours',
+          'rating', 'priceLevel', 'openingHours', 'regularOpeningHours',
           'websiteURI', 'userRatingCount', 'reviews',
         ],
       });
@@ -292,13 +292,13 @@ const App = {
   },
 
   renderDetail(place) {
-    const name        = place.displayName || '';
-    const rating      = place.rating;
+    const name = place.displayName || '';
+    const rating = place.rating;
     const ratingTotal = place.userRatingCount;
-    const address     = place.formattedAddress || '住所情報なし';
-    const phone       = place.nationalPhoneNumber || '';
-    const priceLevel  = this.priceLevelToYen(place.priceLevel);
-    const website     = place.websiteURI || '';
+    const address = place.formattedAddress || '住所情報なし';
+    const phone = place.nationalPhoneNumber || '';
+    const priceLevel = this.priceLevelToYen(place.priceLevel);
+    const website = place.websiteURI || '';
     const isOpen = this.getOpenNow(place);
 
     document.getElementById('detail-name').textContent = name;
@@ -322,7 +322,7 @@ const App = {
 
     // 本日の営業時間のみ表示（weekdayDescriptions は月曜=0, 日曜=6）
     const hoursEl = document.getElementById('detail-hours');
-    const weekdays = place.regularOpeningHours?.weekdayDescriptions;
+    const weekdays = place.regularOpeningHours?.weekdayDescriptions || place.openingHours?.weekdayDescriptions;
     if (weekdays?.length >= 7) {
       const jsDay = new Date().getDay(); // 0=日, 1=月, ..., 6=土
       const googleIdx = jsDay === 0 ? 6 : jsDay - 1;
@@ -354,11 +354,11 @@ const App = {
       reviewsEl.innerHTML = `
         <div class="reviews-title">💬 口コミ</div>
         ${reviews.slice(0, 3).map(r => {
-          const author = r.authorAttribution?.displayName || '匿名';
-          const stars  = '⭐'.repeat(Math.round(r.rating || 0));
-          const text   = typeof r.text === 'string' ? r.text : (r.text?.text || '');
-          const time   = r.relativePublishTimeDescription || '';
-          return `<div class="review-card">
+        const author = r.authorAttribution?.displayName || '匿名';
+        const stars = '⭐'.repeat(Math.round(r.rating || 0));
+        const text = typeof r.text === 'string' ? r.text : (r.text?.text || '');
+        const time = r.relativePublishTimeDescription || '';
+        return `<div class="review-card">
             <div class="review-header">
               <span class="review-author">${author}</span>
               <span class="review-stars">${stars}</span>
@@ -366,7 +366,7 @@ const App = {
             </div>
             ${text ? `<div class="review-text">${text}</div>` : ''}
           </div>`;
-        }).join('')}`;
+      }).join('')}`;
     } else {
       reviewsEl.innerHTML = '';
     }
@@ -383,10 +383,10 @@ const App = {
   // ===== ユーティリティ =====
   detectBrowser() {
     const ua = navigator.userAgent;
-    const isIOS     = /iPhone|iPad|iPod/.test(ua);
+    const isIOS = /iPhone|iPad|iPod/.test(ua);
     const isAndroid = /Android/.test(ua);
-    const isSafari  = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS/.test(ua);
-    const isChrome  = /CriOS|Chrome/.test(ua);
+    const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS/.test(ua);
+    const isChrome = /CriOS|Chrome/.test(ua);
     const isFirefox = /FxiOS|Firefox/.test(ua);
     return { isIOS, isAndroid, isSafari, isChrome, isFirefox };
   },
@@ -425,15 +425,15 @@ const App = {
     return '💻 アドレスバーの🔒 → 位置情報 → 許可';
   },
 
-  // regularOpeningHours から営業中かどうかを取得（isOpen関数 or openNow プロパティ対応）
+  // openingHours / regularOpeningHours から営業中かどうかを取得（isOpen関数 or openNow プロパティ対応）
   getOpenNow(place) {
-    // currentOpeningHours → regularOpeningHours の順で確認
-    for (const oh of [place?.currentOpeningHours, place?.regularOpeningHours]) {
+    // currentOpeningHours → regularOpeningHours → openingHours の順で確認
+    for (const oh of [place?.currentOpeningHours, place?.regularOpeningHours, place?.openingHours]) {
       if (!oh) continue;
       try {
         if (typeof oh.isOpen === 'function') return oh.isOpen();
         if (oh.openNow != null) return oh.openNow;
-      } catch {}
+      } catch { }
     }
     return null;
   },
@@ -455,7 +455,7 @@ const App = {
     setTimeout(() => {
       const screen = document.getElementById(`${name}-screen`);
       screen.querySelectorAll('ins.adsbygoogle:not([data-adsbygoogle-status])').forEach(() => {
-        try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
+        try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { }
       });
     }, 100);
   },
