@@ -18,8 +18,14 @@ const App = {
 
   start() {
     this.showScreen('search');
-    // 自動取得を試みる（iOS Safari では失敗する場合あり → 行タップで再試行）
-    this.getLocation();
+    const { isIOS } = this.detectBrowser();
+    if (isIOS) {
+      // iOS はユーザーのタップでのみ取得（自動呼び出しはブロックされる）
+      const text = document.getElementById('location-status-text');
+      text.textContent = '📍 タップして現在地を取得';
+    } else {
+      this.getLocation();
+    }
   },
 
   // ===== イベントバインド =====
@@ -70,11 +76,11 @@ const App = {
       }
       dot.className = 'location-dot error';
       if (err.code === 1) {
-        text.innerHTML = '拒否されました。Safari設定 → このWebサイト → 位置情報 → 許可';
+        text.innerHTML = this.getLocationDeniedMessage();
       } else if (err.code === 3) {
-        text.textContent = '取得タイムアウト。↺ ボタンで再試行してください';
+        text.textContent = '取得タイムアウト。行をタップして再試行してください';
       } else {
-        text.textContent = '位置情報を取得できませんでした';
+        text.textContent = '位置情報を取得できませんでした。行をタップして再試行してください';
       }
     };
 
@@ -375,6 +381,50 @@ const App = {
   },
 
   // ===== ユーティリティ =====
+  detectBrowser() {
+    const ua = navigator.userAgent;
+    const isIOS     = /iPhone|iPad|iPod/.test(ua);
+    const isAndroid = /Android/.test(ua);
+    const isSafari  = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS/.test(ua);
+    const isChrome  = /CriOS|Chrome/.test(ua);
+    const isFirefox = /FxiOS|Firefox/.test(ua);
+    return { isIOS, isAndroid, isSafari, isChrome, isFirefox };
+  },
+
+  getLocationDeniedMessage() {
+    const { isIOS, isAndroid, isSafari, isChrome, isFirefox } = this.detectBrowser();
+
+    if (isIOS && isSafari) {
+      return '📱 設定アプリ → Safari → 位置情報 → 許可<br>またはアドレスバー「ぁあ」→ Webサイトの設定 → 位置情報 → 許可';
+    }
+    if (isIOS && isChrome) {
+      return '📱 設定アプリ → Chrome → 位置情報 → 許可';
+    }
+    if (isIOS && isFirefox) {
+      return '📱 設定アプリ → Firefox → 位置情報 → 許可';
+    }
+    if (isIOS) {
+      return '📱 設定アプリ → プライバシーとセキュリティ → 位置情報サービス → ブラウザ → 許可';
+    }
+    if (isAndroid && isChrome) {
+      return '🤖 アドレスバーの🔒 → 権限 → 位置情報 → 許可';
+    }
+    if (isAndroid && isFirefox) {
+      return '🤖 アドレスバーの🔒 → 位置情報 → 許可';
+    }
+    if (isAndroid) {
+      return '🤖 ブラウザの設定から位置情報を許可してください';
+    }
+    if (isSafari) {
+      return '💻 Safari → 設定 → Webサイト → 位置情報 → 許可';
+    }
+    if (isFirefox) {
+      return '💻 アドレスバーの🔒 → 接続のセキュリティ → 位置情報 → 許可';
+    }
+    // Chrome / Edge など
+    return '💻 アドレスバーの🔒 → 位置情報 → 許可';
+  },
+
   // regularOpeningHours から営業中かどうかを取得（isOpen関数 or openNow プロパティ対応）
   getOpenNow(place) {
     // currentOpeningHours → regularOpeningHours の順で確認
