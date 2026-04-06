@@ -117,10 +117,9 @@ const App = {
       if (genre) {
         // キーワード指定 → searchByText（locationBias で円形指定）
         ({ places } = await google.maps.places.Place.searchByText({
-          textQuery: genre,
+          textQuery: `${genre} 飲食店`,
           fields,
           locationBias: { center, radius },
-          includedType: 'restaurant',
           maxResultCount: 20,
         }));
       } else {
