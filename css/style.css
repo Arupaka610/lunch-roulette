@@ -653,12 +653,7 @@ body {
   font-weight: 600;
 }
 
-/* ===== Reviews ===== */
-.detail-reviews {
-  width: 100%;
-  max-width: var(--max-w);
-}
-
+/* ===== Reviews (カード内) ===== */
 .reviews-title {
   font-size: 0.95rem;
   font-weight: 800;
@@ -667,11 +662,8 @@ body {
 }
 
 .review-card {
-  background: var(--white);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  box-shadow: var(--shadow-sm);
+  border-top: 1px solid var(--border);
+  padding: 12px 0;
 }
 
 .review-header {

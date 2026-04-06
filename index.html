@@ -187,14 +187,20 @@
         <div class="detail-section-label">📞 電話番号</div>
         <div id="detail-phone" class="detail-section-value"></div>
       </div>
-      <!-- Google マップボタン: カードのすぐ下 -->
-      <a id="btn-maps" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-large" style="margin-top:8px">
-        🗺️ Google マップで開く
-      </a>
+      <!-- 口コミ: カード内 -->
+      <div id="detail-reviews"></div>
     </div>
 
-    <!-- 口コミ -->
-    <div id="detail-reviews" class="detail-reviews"></div>
+    <!-- ボタン: カード外すぐ下 -->
+    <div class="detail-actions">
+      <a id="btn-maps" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-large">
+        🗺️ Google マップで開く
+      </a>
+      <a id="btn-website" href="#" target="_blank" rel="noopener noreferrer"
+         class="btn btn-outline btn-large" style="display:none">
+        🌐 ウェブサイト
+      </a>
+    </div>
 
     <!-- 広告: 詳細画面 -->
     <div class="ad-container">
@@ -204,13 +210,6 @@
            data-ad-slot="ADSENSE_SLOT_PLACEHOLDER"
            data-ad-format="auto"
            data-full-width-responsive="true"></ins>
-    </div>
-
-    <div class="detail-actions">
-      <a id="btn-website" href="#" target="_blank" rel="noopener noreferrer"
-         class="btn btn-outline btn-large" style="display:none">
-        🌐 ウェブサイト
-      </a>
     </div>
 
     <button id="btn-new-search" class="btn btn-ghost">

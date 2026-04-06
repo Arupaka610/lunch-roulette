@@ -229,9 +229,8 @@ const App = {
   buildCardHTML(restaurant) {
     const rating     = restaurant.rating != null ? `${restaurant.rating}` : null;
     const priceLevel = this.priceLevelToYen(restaurant.priceLevel);
-    const oh = restaurant.regularOpeningHours;
-    const open = oh && typeof oh.isOpen === 'function' ? oh.isOpen() : null;
-    const openLabel = open != null ? (open ? '営業中' : '準備中') : null;
+    const open       = this.getOpenNow(restaurant.regularOpeningHours);
+    const openLabel  = open != null ? (open ? '営業中' : '準備中') : null;
 
     const infoItems = [
       rating     ? `<span class="stars">⭐ ${rating}</span>` : '',
@@ -294,8 +293,7 @@ const App = {
     const phone       = place.nationalPhoneNumber || '';
     const priceLevel  = this.priceLevelToYen(place.priceLevel);
     const website     = place.websiteURI || '';
-    const _oh = place.regularOpeningHours;
-    const isOpen = _oh && typeof _oh.isOpen === 'function' ? _oh.isOpen() : null;
+    const isOpen = this.getOpenNow(place.regularOpeningHours);
 
     document.getElementById('detail-name').textContent = name;
 
@@ -316,13 +314,16 @@ const App = {
     }
     document.getElementById('detail-meta').innerHTML = badges.join('');
 
-    // 本日の営業時間のみ表示
+    // 本日の営業時間のみ表示（weekdayDescriptions は月曜=0, 日曜=6）
     const hoursEl = document.getElementById('detail-hours');
     const weekdays = place.regularOpeningHours?.weekdayDescriptions;
-    if (weekdays?.length) {
-      const dow = new Date().getDay(); // 0=日, 1=月 ... 6=土
-      const idx = dow === 0 ? 6 : dow - 1; // Google は月曜=0, 日曜=6
-      hoursEl.innerHTML = `<div class="today-hours">🕐 ${weekdays[idx] || ''}</div>`;
+    if (weekdays?.length >= 7) {
+      const jsDay = new Date().getDay(); // 0=日, 1=月, ..., 6=土
+      const googleIdx = jsDay === 0 ? 6 : jsDay - 1;
+      const todayStr = weekdays[googleIdx] || '';
+      // 曜日部分を除いて時間だけ表示（例「月曜日: 11:00〜15:00」→「🕐 11:00〜15:00」）
+      const timeOnly = todayStr.replace(/^.+?:\s*/, '');
+      hoursEl.innerHTML = `<div class="today-hours">🕐 ${timeOnly}</div>`;
     } else {
       hoursEl.textContent = '';
     }
@@ -340,27 +341,25 @@ const App = {
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&query_place_id=${place.id}`;
     document.getElementById('btn-maps').href = mapsUrl;
 
-    // 口コミ
+    // 口コミ（カード内）
     const reviewsEl = document.getElementById('detail-reviews');
     const reviews = place.reviews;
     if (reviews?.length) {
-      const top = reviews.slice(0, 3);
       reviewsEl.innerHTML = `
         <div class="reviews-title">💬 口コミ</div>
-        ${top.map(r => {
+        ${reviews.slice(0, 3).map(r => {
           const author = r.authorAttribution?.displayName || '匿名';
           const stars  = '⭐'.repeat(Math.round(r.rating || 0));
           const text   = typeof r.text === 'string' ? r.text : (r.text?.text || '');
           const time   = r.relativePublishTimeDescription || '';
-          return `
-            <div class="review-card">
-              <div class="review-header">
-                <span class="review-author">${author}</span>
-                <span class="review-stars">${stars}</span>
-                <span class="review-time">${time}</span>
-              </div>
-              ${text ? `<div class="review-text">${text}</div>` : ''}
-            </div>`;
+          return `<div class="review-card">
+            <div class="review-header">
+              <span class="review-author">${author}</span>
+              <span class="review-stars">${stars}</span>
+              <span class="review-time">${time}</span>
+            </div>
+            ${text ? `<div class="review-text">${text}</div>` : ''}
+          </div>`;
         }).join('')}`;
     } else {
       reviewsEl.innerHTML = '';
@@ -376,6 +375,16 @@ const App = {
   },
 
   // ===== ユーティリティ =====
+  // regularOpeningHours から営業中かどうかを取得（isOpen関数 or openNow プロパティ対応）
+  getOpenNow(oh) {
+    if (!oh) return null;
+    try {
+      if (typeof oh.isOpen === 'function') return oh.isOpen();
+      if (oh.openNow != null) return oh.openNow;
+    } catch {}
+    return null;
+  },
+
   priceLevelToYen(priceLevel) {
     const map = {
       FREE: '', INEXPENSIVE: '¥', MODERATE: '¥¥',
