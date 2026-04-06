@@ -110,7 +110,7 @@ const App = {
         'id', 'displayName', 'location', 'rating',
         'priceLevel', 'regularOpeningHours', 'businessStatus',
       ];
-      const center = { lat: this.userLocation.lat, lng: this.userLocation.lng };
+      const center = new google.maps.LatLng(this.userLocation.lat, this.userLocation.lng);
 
       let places;
 
