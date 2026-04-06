@@ -261,7 +261,7 @@ const App = {
         fields: [
           'id', 'displayName', 'formattedAddress', 'nationalPhoneNumber',
           'rating', 'priceLevel', 'regularOpeningHours',
-          'websiteURI', 'userRatingCount',
+          'websiteURI', 'userRatingCount', 'reviews',
         ],
       });
     } catch (e) {
@@ -316,10 +316,13 @@ const App = {
     }
     document.getElementById('detail-meta').innerHTML = badges.join('');
 
+    // 本日の営業時間のみ表示
     const hoursEl = document.getElementById('detail-hours');
     const weekdays = place.regularOpeningHours?.weekdayDescriptions;
     if (weekdays?.length) {
-      hoursEl.innerHTML = weekdays.map(t => `<div>${t}</div>`).join('');
+      const dow = new Date().getDay(); // 0=日, 1=月 ... 6=土
+      const idx = dow === 0 ? 6 : dow - 1; // Google は月曜=0, 日曜=6
+      hoursEl.innerHTML = `<div class="today-hours">🕐 ${weekdays[idx] || ''}</div>`;
     } else {
       hoursEl.textContent = '';
     }
@@ -336,6 +339,32 @@ const App = {
 
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&query_place_id=${place.id}`;
     document.getElementById('btn-maps').href = mapsUrl;
+
+    // 口コミ
+    const reviewsEl = document.getElementById('detail-reviews');
+    const reviews = place.reviews;
+    if (reviews?.length) {
+      const top = reviews.slice(0, 3);
+      reviewsEl.innerHTML = `
+        <div class="reviews-title">💬 口コミ</div>
+        ${top.map(r => {
+          const author = r.authorAttribution?.displayName || '匿名';
+          const stars  = '⭐'.repeat(Math.round(r.rating || 0));
+          const text   = typeof r.text === 'string' ? r.text : (r.text?.text || '');
+          const time   = r.relativePublishTimeDescription || '';
+          return `
+            <div class="review-card">
+              <div class="review-header">
+                <span class="review-author">${author}</span>
+                <span class="review-stars">${stars}</span>
+                <span class="review-time">${time}</span>
+              </div>
+              ${text ? `<div class="review-text">${text}</div>` : ''}
+            </div>`;
+        }).join('')}`;
+    } else {
+      reviewsEl.innerHTML = '';
+    }
 
     const websiteBtn = document.getElementById('btn-website');
     if (website) {
