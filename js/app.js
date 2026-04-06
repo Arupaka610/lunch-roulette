@@ -114,7 +114,7 @@ const App = {
     try {
       const fields = [
         'id', 'displayName', 'location', 'rating',
-        'priceLevel', 'openingHours', 'regularOpeningHours', 'currentOpeningHours', 'businessStatus',
+        'priceLevel', 'regularOpeningHours', 'currentOpeningHours', 'businessStatus',
       ];
       const center = new google.maps.LatLng(this.userLocation.lat, this.userLocation.lng);
 
