@@ -115,11 +115,11 @@ const App = {
       let places;
 
       if (genre) {
-        // キーワード指定 → searchByText
+        // キーワード指定 → searchByText（locationBias で円形指定）
         ({ places } = await google.maps.places.Place.searchByText({
           textQuery: genre,
           fields,
-          locationRestriction: { center, radius },
+          locationBias: { center, radius },
           includedType: 'restaurant',
           maxResultCount: 20,
         }));
@@ -135,16 +135,19 @@ const App = {
 
       // 予算フィルター（クライアント側）
       if (budget && places?.length) {
-        const PL = google.maps.places.PriceLevel;
         const budgetMap = {
-          '1': [PL.FREE, PL.INEXPENSIVE],
-          '2': [PL.MODERATE],
-          '3': [PL.EXPENSIVE],
-          '4': [PL.VERY_EXPENSIVE],
+          '1': ['FREE', 'INEXPENSIVE'],
+          '2': ['MODERATE'],
+          '3': ['EXPENSIVE'],
+          '4': ['VERY_EXPENSIVE'],
         };
         const allowed = budgetMap[budget];
         if (allowed) {
-          const filtered = places.filter(p => p.priceLevel && allowed.includes(p.priceLevel));
+          const filtered = places.filter(p => {
+            if (!p.priceLevel) return false;
+            const lvl = String(p.priceLevel).toUpperCase();
+            return allowed.includes(lvl);
+          });
           if (filtered.length >= 3) places = filtered;
         }
       }
