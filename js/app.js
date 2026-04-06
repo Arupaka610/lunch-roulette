@@ -265,7 +265,7 @@ const App = {
       await restaurant.fetchFields({
         fields: [
           'id', 'displayName', 'formattedAddress', 'nationalPhoneNumber',
-          'rating', 'priceLevel', 'openingHours', 'regularOpeningHours',
+          'rating', 'priceLevel', 'regularOpeningHours',
           'websiteURI', 'userRatingCount', 'reviews',
         ],
       });
@@ -322,7 +322,7 @@ const App = {
 
     // 本日の営業時間のみ表示（weekdayDescriptions は月曜=0, 日曜=6）
     const hoursEl = document.getElementById('detail-hours');
-    const weekdays = place.regularOpeningHours?.weekdayDescriptions || place.openingHours?.weekdayDescriptions;
+    const weekdays = place.regularOpeningHours?.weekdayDescriptions;
     if (weekdays?.length >= 7) {
       const jsDay = new Date().getDay(); // 0=日, 1=月, ..., 6=土
       const googleIdx = jsDay === 0 ? 6 : jsDay - 1;
@@ -425,10 +425,10 @@ const App = {
     return '💻 アドレスバーの🔒 → 位置情報 → 許可';
   },
 
-  // openingHours / regularOpeningHours から営業中かどうかを取得（isOpen関数 or openNow プロパティ対応）
+  // regularOpeningHours から営業中かどうかを取得（isOpen関数 or openNow プロパティ対応）
   getOpenNow(place) {
-    // currentOpeningHours → regularOpeningHours → openingHours の順で確認
-    for (const oh of [place?.currentOpeningHours, place?.regularOpeningHours, place?.openingHours]) {
+    // currentOpeningHours → regularOpeningHours の順で確認
+    for (const oh of [place?.currentOpeningHours, place?.regularOpeningHours]) {
       if (!oh) continue;
       try {
         if (typeof oh.isOpen === 'function') return oh.isOpen();
